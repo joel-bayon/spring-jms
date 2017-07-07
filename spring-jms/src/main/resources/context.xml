@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:beans="http://www.springframework.org/schema/beans"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xsi:schemaLocation="
+    http://www.springframework.org/schema/beans 
+    http://www.springframework.org/schema/beans/spring-beans.xsd 
+    http://www.springframework.org/schema/context 
+    http://www.springframework.org/schema/context/spring-context.xsd">
+ 
+  <context:component-scan base-package="fr.cogitec"/>
+ 
+ <!-- Activemq connection factory -->
+  <bean id="amqConnectionFactory" 
+		class="org.apache.activemq.ActiveMQConnectionFactory">
+    <!-- brokerURL, You may have different IP or port -->
+    <constructor-arg value="tcp://localhost:61616" />
+  </bean>
+  
+  <!-- Pooled Spring connection factory as pooled Jdbc connections -->
+  <bean id="connectionFactory"
+		class="org.springframework.jms.connection.CachingConnectionFactory">
+		<constructor-arg ref="amqConnectionFactory" />
+		<property name="sessionCacheSize" value="10"/>
+	</bean> 
+	
+  <!-- Default Destination Queue Definition -->
+  <bean id="defaultDestination" 
+		class="org.apache.activemq.command.ActiveMQQueue">
+    <!-- name of the queue -->
+    <constructor-arg value="hello" />
+  </bean> 
+  
+  <!-- JmsTemplate Definition -->
+  <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+    <property name="connectionFactory" ref="connectionFactory" />
+    <property name="defaultDestination" ref="defaultDestination" />
+  </bean>
+  
+  <!-- JMS Receive，Define MessageListenerContainer      -->
+	<bean 
+		id = "messageListenerContainer" 
+	     class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+    	<property name="connectionFactory" ref="connectionFactory"/>
+    	<property name="destinationName" value="hello"/>
+    	<property name="messageListener" ref="helloWorldConsumer"/>
+   </bean>
+  
+  
+ 
+</beans>
